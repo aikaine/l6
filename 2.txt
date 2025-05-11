@@ -1,0 +1,196 @@
+#include <iostream>
+#include <ctime>
+#include <cstdlib>
+using namespace std;
+
+// ---------------------------- Часть 1: Цепное представление ----------------------------
+
+struct Node {
+    int data;
+    Node* next;
+};
+
+class LinkedQueue {
+private:
+    Node* front;
+    Node* rear;
+public:
+    LinkedQueue() : front(nullptr), rear(nullptr) {}
+
+    void enqueue(int value) {
+        Node* newNode = new Node{ value, nullptr };
+        if (rear == nullptr) {
+            front = rear = newNode;
+        }
+        else {
+            rear->next = newNode;
+            rear = newNode;
+        }
+    }
+
+    void dequeue() {
+        if (front == nullptr) {
+            cout << "Очередь пуста. Удаление невозможно.\n";
+            return;
+        }
+        Node* temp = front;
+        front = front->next;
+        if (front == nullptr) rear = nullptr;
+        delete temp;
+    }
+
+    void display() {
+        Node* temp = front;
+        cout << "Очередь (цепное представление): ";
+        while (temp) {
+            cout << temp->data << " ";
+            temp = temp->next;
+        }
+        cout << endl;
+    }
+
+    void removeAfterMax() {
+        if (!front) return;
+
+        Node* maxNode = front;
+        Node* current = front;
+        while (current) {
+            if (current->data > maxNode->data) {
+                maxNode = current;
+            }
+            current = current->next;
+        }
+
+        Node* temp = maxNode->next;
+        maxNode->next = nullptr;
+        rear = maxNode;
+
+        while (temp) {
+            Node* toDelete = temp;
+            temp = temp->next;
+            delete toDelete;
+        }
+
+        cout << "Удалены все элементы после максимального (" << maxNode->data << ").\n";
+    }
+};
+
+// ---------------------------- Часть 2: Сплошное представление ----------------------------
+
+class ArrayQueue {
+private:
+    int* queue;
+    int capacity;
+    int front, rear, size;
+
+public:
+    ArrayQueue(int cap) : capacity(cap), front(0), rear(-1), size(0) {
+        queue = new int[capacity];
+    }
+
+    ~ArrayQueue() {
+        delete[] queue;
+    }
+
+    void enqueue(int value) {
+        if (size == capacity) {
+            cout << "Очередь переполнена.\n";
+            return;
+        }
+        rear = (rear + 1) % capacity;
+        queue[rear] = value;
+        ++size;
+    }
+
+    void dequeue() {
+        if (size == 0) {
+            cout << "Очередь пуста. Удаление невозможно.\n";
+            return;
+        }
+        front = (front + 1) % capacity;
+        --size;
+    }
+
+    void display() {
+        cout << "Очередь (сплошное представление): ";
+        for (int i = 0; i < size; ++i) {
+            cout << queue[(front + i) % capacity] << " ";
+        }
+        cout << endl;
+    }
+
+    void removeAfterMax() {
+        if (size == 0) return;
+
+        int maxIndex = 0;
+        int maxValue = queue[front];
+        for (int i = 1; i < size; ++i) {
+            int idx = (front + i) % capacity;
+            if (queue[idx] > maxValue) {
+                maxValue = queue[idx];
+                maxIndex = i;
+            }
+        }
+
+        size = maxIndex + 1;
+        rear = (front + maxIndex) % capacity;
+        cout << "Удалены все элементы после максимального (" << maxValue << ").\n";
+    }
+};
+
+// ---------------------------- Генерация случайных данных ----------------------------
+
+void generateRandomNumbers(int arr[], int size) {
+    srand(static_cast<unsigned>(time(0)));
+    for (int i = 0; i < size; ++i) {
+        arr[i] = rand() % 100;
+        cout << "Случайное число #" << (i + 1) << ": " << arr[i] << endl;
+    }
+}
+
+// ---------------------------- Главная функция ----------------------------
+
+int main() {
+    setlocale(LC_ALL, "ru");
+    const int N = 10;
+    int data[N];
+
+    cout << "Генерация 10 случайных чисел для очереди:\n";
+    generateRandomNumbers(data, N);
+
+    // Цепное представление
+    LinkedQueue linkedQueue;
+    for (int i = 0; i < N; ++i) {
+        linkedQueue.enqueue(data[i]);
+    }
+    linkedQueue.display();
+
+    linkedQueue.dequeue();
+    linkedQueue.enqueue(20);
+    cout << "После удаления и добавления элемента (цепное представление):\n";
+    linkedQueue.display();
+
+    linkedQueue.removeAfterMax();
+    cout << "После удаления элементов после максимального (цепное):\n";
+    linkedQueue.display();
+
+    cout << "\n----------------------------------------\n";
+
+    // Сплошное представление
+    ArrayQueue arrayQueue(N + 5); // запас места
+    for (int i = 0; i < N; ++i) {
+        arrayQueue.enqueue(data[i]);
+    }
+    arrayQueue.display();
+
+    arrayQueue.dequeue();
+    arrayQueue.enqueue(20);
+    cout << "После удаления и добавления элемента (сплошное представление):\n";
+    arrayQueue.display();
+
+    arrayQueue.removeAfterMax();
+    cout << "После удаления элементов после максимального (сплошное):\n";
+    arrayQueue.display();
+
+    return 0;
+}
